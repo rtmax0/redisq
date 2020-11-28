@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.davidmarquis</groupId>
+    <groupId>com.github.rtmax0</groupId>
     <artifactId>redisq</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>redisq</name>
     <description>RedisQ - Java implementation of a reliable Pub/Sub message queue based on Redis</description>
-    <url>https://github.com/davidmarquis/redisq</url>
+    <url>https://github.com/rtmax0/redisq</url>
 
     <licenses>
         <license>
@@ -20,17 +20,17 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:davidmarquis/redisq.git</connection>
-        <developerConnection>scm:git:git@github.com:davidmarquis/redisq.git</developerConnection>
-        <url>git@github.com:davidmarquis/redisq.git</url>
+        <connection>scm:git:git@github.com:rtmax0/redisq.git</connection>
+        <developerConnection>scm:git:git@github.com:rtmax0/redisq.git</developerConnection>
+        <url>git@github.com:rtmax0/redisq.git</url>
         <tag>HEAD</tag>
     </scm>
 
     <developers>
         <developer>
-            <id>davidmarquis</id>
-            <name>David Marquis</name>
-            <email>david@radiant3.ca</email>
+            <id>rtmax0</id>
+            <name>rtmax0</name>
+            <email>rtmax0@gmail.com</email>
         </developer>
     </developers>
 
