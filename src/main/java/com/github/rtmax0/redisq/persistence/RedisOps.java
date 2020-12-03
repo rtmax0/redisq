@@ -3,7 +3,7 @@ package com.github.rtmax0.redisq.persistence;
 import com.github.rtmax0.redisq.Message;
 import com.github.rtmax0.redisq.MessageQueue;
 import com.github.rtmax0.redisq.serialization.DefaultMessageConverter;
-import com.github.rtmax0.redisq.serialization.JaxbPayloadSerializer;
+import com.github.rtmax0.redisq.serialization.GsonPayloadSerializer;
 import com.github.rtmax0.redisq.serialization.MessageConverter;
 import com.github.rtmax0.redisq.serialization.PayloadSerializer;
 import com.github.rtmax0.redisq.utils.KeysFactory;
@@ -22,7 +22,7 @@ public class RedisOps {
 
     private JedisWrapper jedisWrapper;
 
-    private PayloadSerializer payloadSerializer = new JaxbPayloadSerializer();
+    private PayloadSerializer payloadSerializer = new GsonPayloadSerializer();
 
     private MessageConverter  messageConverter  = new DefaultMessageConverter();
 
@@ -210,8 +210,7 @@ public class RedisOps {
         });
     }
 
-    // 兼容性
-    public void setRedisTemplate(Object redisTemplate) {
-        // this.redisTemplate = redisTemplate;
+    public void setJedisWrapper(JedisWrapper jedisWrapper) {
+        this.jedisWrapper = jedisWrapper;
     }
 }

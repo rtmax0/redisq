@@ -19,8 +19,16 @@
         </property>
     </bean>
 
+    <bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+        <constructor-arg name="host" value="${test.redis.host}"/>
+        <constructor-arg name="port" value="${test.redis.port}"/>
+    </bean>
+    <bean id="jedisWrapper" class="com.github.rtmax0.redisq.persistence.JedisWrapper">
+        <constructor-arg name="jedisPool" ref="jedisPool"/>
+    </bean>
+
     <bean id="redisOps" class="com.github.rtmax0.redisq.persistence.RedisOps">
-        <property name="redisTemplate" ref="redisTemplate"/>
+        <property name="jedisWrapper" ref="jedisWrapper"/>
     </bean>
 
 </beans>

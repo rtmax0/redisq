@@ -1,5 +1,6 @@
 package com.github.rtmax0.redisq.cucumber.steps;
 
+import com.github.rtmax0.redisq.persistence.RedisOps;
 import com.github.rtmax0.redisq.producer.DefaultMessageProducer;
 import com.github.rtmax0.redisq.producer.MessageProducer;
 import com.github.rtmax0.redisq.producer.MessageSender;
@@ -16,6 +17,9 @@ public class ProducerSteps extends Steps {
     private ApplicationContext ctx;
     @Autowired
     private QueueSteps queueSteps;
+
+    @Autowired
+    private RedisOps redisOps;
 
     private MessageSender<String> messageSender;
 
@@ -56,6 +60,8 @@ public class ProducerSteps extends Steps {
     private MessageProducer<String> aMessageProducer(String queue) {
         DefaultMessageProducer<String> producer = ctx.getAutowireCapableBeanFactory().createBean(DefaultMessageProducer.class);
         producer.setQueue(queueSteps.queueWithName(queue));
+        producer.setRedisOps(redisOps);
+        producer.initialize();
 
         return producer;
     }

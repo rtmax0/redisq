@@ -31,7 +31,8 @@ public class DefaultMessageProducer<T> implements MessageProducer<T> {
     }
 
     public MessageSender<T> create(T payload) {
-        return new DefaultMessageSender(payload);
+        this.initialize();
+        return new DefaultMessageSender(this, payload);
     }
 
     private void submit(Message<T> message) {
@@ -68,10 +69,13 @@ public class DefaultMessageProducer<T> implements MessageProducer<T> {
         private TimeUnit timeToLiveUnit;
         private String targetConsumer;
 
-        private DefaultMessageSender(T payload) {
+        private DefaultMessageProducer<T> producer;
+
+        private DefaultMessageSender(DefaultMessageProducer<T> producer, T payload) {
             this.payload = payload;
             this.timeToLive = defaultTimeToLive;
             this.timeToLiveUnit = defaultTimeToLiveUnit;
+            this.producer = producer;
         }
 
         public MessageSender<T> withTimeToLive(long time, TimeUnit unit) {
@@ -95,10 +99,12 @@ public class DefaultMessageProducer<T> implements MessageProducer<T> {
 
             redisOps.addMessage(queue.getQueueName(), message);
 
+            System.out.println("redis=" + this.producer.redisOps);
+            this.producer.initialize();
             if (StringUtils.isNotEmpty(targetConsumer)) {
-                DefaultMessageProducer.this.submit(message, targetConsumer);
+                this.producer.submit(message, targetConsumer);
             } else {
-                DefaultMessageProducer.this.submit(message);
+                this.producer.submit(message);
             }
         }
     }

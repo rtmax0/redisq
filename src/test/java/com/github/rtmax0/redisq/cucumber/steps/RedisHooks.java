@@ -1,16 +1,19 @@
 package com.github.rtmax0.redisq.cucumber.steps;
 
+import com.github.rtmax0.redisq.persistence.JedisWrapper;
 import cucumber.api.java.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
+import redis.clients.jedis.BinaryJedis;
 
 public class RedisHooks extends Steps {
 
+//    @Autowired
+//    private RedisTemplate redisTemplate;
+
     @Autowired
-    private RedisTemplate redisTemplate;
+    private JedisWrapper jedisWrapper;
 
 
     @Qualifier("jedisConnectionFactory")
@@ -21,10 +24,12 @@ public class RedisHooks extends Steps {
     @SuppressWarnings("unchecked")
     public void setupGlobal() {
         jedisConnectionFactory.setDatabase(2);
+//
+//        redisTemplate.execute((RedisCallback<Object>) connection -> {
+//            connection.flushDb();
+//            return null;
+//        });
 
-        redisTemplate.execute((RedisCallback<Object>) connection -> {
-            connection.flushDb();
-            return null;
-        });
+        jedisWrapper.execute(BinaryJedis::flushDB);
     }
 }

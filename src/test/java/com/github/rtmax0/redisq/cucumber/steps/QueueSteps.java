@@ -36,6 +36,8 @@ public class QueueSteps extends Steps {
     public void A_queue_named_exists(String queueName) throws Throwable {
         RedisMessageQueue queue = ctx.getAutowireCapableBeanFactory().createBean(RedisMessageQueue.class);
         queue.setQueueName(queueName);
+        queue.setRedisOps(redisOps);
+        queue.initialize();
 
         queues.put(queueName, queue);
         lastQueueCreated = queueName;

@@ -50,6 +50,7 @@ public class ConsumerSteps extends Steps {
     public void A_consumer_is_watching_a_queue_named(String consumerId, String queueName) throws Throwable {
 
         MessageConsumer<String> consumer = new MessageConsumer<String>();
+        consumer.setRedisOps(redisOps);
         ctx.getAutowireCapableBeanFactory().autowireBean(consumer);
 
         consumer.setQueue(queueSteps.queueWithName(queueName));
