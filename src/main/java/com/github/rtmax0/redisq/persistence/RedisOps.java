@@ -8,12 +8,6 @@ import com.github.rtmax0.redisq.serialization.MessageConverter;
 import com.github.rtmax0.redisq.serialization.PayloadSerializer;
 import com.github.rtmax0.redisq.utils.KeysFactory;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.data.redis.core.BoundHashOperations;
-import org.springframework.data.redis.core.BoundListOperations;
-import org.springframework.data.redis.core.BoundSetOperations;
-import org.springframework.data.redis.core.BoundValueOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -24,28 +18,20 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
 public class RedisOps {
+//    private RedisTemplate redisTemplate;
 
-    private RedisTemplate redisTemplate;
-
-    private Jedis jedis;
+    private JedisWrapper jedisWrapper;
 
     private PayloadSerializer payloadSerializer = new JaxbPayloadSerializer();
 
     private MessageConverter  messageConverter  = new DefaultMessageConverter();
 
     public void ensureConsumerRegistered(String queueName, String consumerId) {
-
-//        BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(KeysFactory.keyForRegisteredConsumers(queueName));
-//        ops.add(consumerId);
-
-        jedis.sadd(KeysFactory.keyForRegisteredConsumers(queueName), consumerId);
+        jedisWrapper.execute((jedis) -> jedis.set(KeysFactory.keyForRegisteredConsumers(queueName), consumerId));
     }
 
     public Collection<String> getRegisteredConsumers(String queueName) {
-        //BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(KeysFactory.keyForRegisteredConsumers(queueName));
-        //return ops.members();
-
-        return jedis.smembers(KeysFactory.keyForRegisteredConsumers(queueName));
+        return jedisWrapper.executeAndReturn((jedis) -> jedis.smembers(KeysFactory.keyForRegisteredConsumers(queueName)));
     }
 
     public <T> void addMessage(String queueName, Message<T> message) {
@@ -69,36 +55,42 @@ public class RedisOps {
         Map<String, String> asMap = messageConverter.toMap(message, payloadSerializer);
 
         String messageKey = KeysFactory.keyForMessage(queueName, message.getId());
-        redisTemplate.opsForHash().putAll(messageKey, asMap);
-        redisTemplate.expire(messageKey, message.getTimeToLiveSeconds(), TimeUnit.SECONDS);
 
+        jedisWrapper.execute((jedis) -> {
+            jedis.hset(messageKey, asMap);
+            jedis.pexpire(messageKey, TimeUnit.SECONDS.toMillis(message.getTimeToLiveSeconds()));
+        });
     }
 
     public <T> Message<T> loadMessageById(String queueName, String id, Class<T> payloadType) {
         String messageKey = KeysFactory.keyForMessage(queueName, id);
-        BoundHashOperations<String, String, String> ops = redisTemplate.boundHashOps(messageKey);
-        Map<String, String> messageData = ops.entries();
 
-        return messageConverter.toMessage(messageData, payloadType, payloadSerializer);
+        return jedisWrapper.executeAndReturn((jedis) -> {
+            Map<String, String> messageData = jedis.hgetAll(messageKey);
+            return messageConverter.toMessage(messageData, payloadType, payloadSerializer);
+        });
     }
 
     public String dequeueMessageFromHead(String queueName, String consumerId, long timeoutSeconds) {
         String queueKey = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
 
-        BoundListOperations<String, String> ops = redisTemplate.boundListOps(queueKey);
-        return ops.leftPop(timeoutSeconds, TimeUnit.SECONDS);
+        // redisTemplate.opsForList().leftPop(key, timeoutSeconds, TimeUnit.SECONDS);
+        return jedisWrapper.executeAndReturn(jedis -> {
+            List<String> lPop = jedis.blpop((int) timeoutSeconds, queueKey);
+            return (lPop != null && lPop.size() > 0) ? lPop.get(0) : null;
+        });
     }
 
     public <T> Message<T> peekNextMessageInQueue(String queueName, String consumerId, Class<T> payloadType) {
         String queueKey = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
 
-        BoundListOperations<String, String> ops = redisTemplate.boundListOps(queueKey);
-
-        String nextId = ops.index(0);
-        if (nextId == null) {
-            return null;
-        }
-        return loadMessageById(queueName, nextId, payloadType);
+        return jedisWrapper.executeAndReturn((jedis) -> {
+            String nextId = jedis.lindex(queueKey, 0);
+            if (nextId == null) {
+                return null;
+            }
+            return loadMessageById(queueName, nextId, payloadType);
+        });
     }
 
     /**
@@ -109,14 +101,14 @@ public class RedisOps {
 
         String queueKey = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
 
-        BoundListOperations<String, String> ops = redisTemplate.boundListOps(queueKey);
-
-        List<String> messageIds = ops.range(rangeStart, rangeEnd);
-        List<Message<T>> messages = new ArrayList<Message<T>>(messageIds.size());
-        for (String id : messageIds) {
-            messages.add(loadMessageById(queueName, id, payloadType));
-        }
-        return messages;
+        return jedisWrapper.executeAndReturn((jedis) -> {
+            List<String> messageIds = jedis.lrange(queueKey, rangeStart, rangeEnd);
+            List<Message<T>> messages = new ArrayList<Message<T>>(messageIds.size());
+            for (String id : messageIds) {
+                messages.add(loadMessageById(queueName, id, payloadType));
+            }
+            return messages;
+        });
     }
 
     /**
@@ -131,23 +123,21 @@ public class RedisOps {
     public void emptyQueue(String queueName) {
         Collection<String> consumerIds = getRegisteredConsumers(queueName);
 
-        for (String consumerId : consumerIds) {
-            String queueKey = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
-            redisTemplate.delete(queueKey);
-        }
+        jedisWrapper.execute((jedis) -> {
+            for (String consumerId : consumerIds) {
+                String queueKey = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
+                jedis.del(queueKey);
+            }
+        });
     }
 
     private String generateNextMessageID(String queueName) {
-
-        return Long.toString(jedis.incrBy(KeysFactory.keyForNextID(queueName), 1));
-
-//        return Long.toString(
-//                redisTemplate.opsForValue().increment(KeysFactory.keyForNextID(queueName), 1)
-//        );
+        return jedisWrapper.executeAndReturn((jedis) -> Long.toString(jedis.incrBy(KeysFactory.keyForNextID(queueName), 1)));
     }
 
     public Long getQueueSizeForConsumer(String queueName, String consumerId) {
-        return redisTemplate.opsForList().size(KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId));
+        return jedisWrapper.executeAndReturn((jedis) -> jedis.llen(KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId)));
+
     }
 
     public void enqueueMessageAtTail(String queueName, String consumerId, String messageId) {
@@ -156,8 +146,9 @@ public class RedisOps {
         }
 
         String key = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
-
-        redisTemplate.opsForList().rightPush(key, messageId);
+        jedisWrapper.execute((jedis) -> {
+            jedis.rpush(key, messageId);
+        });
     }
 
     public void enqueueMessageInSet(String queueName, String consumerId, String messageId) {
@@ -167,44 +158,60 @@ public class RedisOps {
 
         String key = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
 
-        redisTemplate.opsForSet().add(key, messageId);
+        jedisWrapper.execute((jedis) -> {
+            jedis.sadd(key, messageId);
+        });
     }
 
     public void notifyWaitersOnSet(String queueName, String consumerId) {
         String key = KeysFactory.keyForConsumerSpecificQueueNotificationList(queueName, consumerId);
 
-        redisTemplate.opsForList().rightPush(key, "x");
+        jedisWrapper.execute(jedis -> {
+            jedis.rpush(key, "x");
+        });
     }
 
     public void waitOnSet(String queueName, String consumerId, long timeoutSeconds) {
         String key = KeysFactory.keyForConsumerSpecificQueueNotificationList(queueName, consumerId);
 
-        redisTemplate.opsForList().leftPop(key, timeoutSeconds, TimeUnit.SECONDS);
+        // redisTemplate.opsForList().leftPop(key, timeoutSeconds, TimeUnit.SECONDS);
+        jedisWrapper.executeAndReturn(jedis -> {
+            List<String> lPop = jedis.blpop((int) timeoutSeconds, key);
+            return (lPop != null && lPop.size() > 0) ? lPop.get(0) : null;
+        });
     }
 
     public String randomPopFromSet(String queueName, String consumerId) {
-        String key = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
-
-        BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(key);
-        return ops.pop();
+        return jedisWrapper.executeAndReturn((jedis) -> {
+            String key = KeysFactory.keyForConsumerSpecificQueue(queueName, consumerId);
+            return jedis.spop(key);
+        });
     }
 
     public boolean tryObtainLockForQueue(String queueName, String consumerId, long expirationTimeout, TimeUnit unit) {
-        BoundValueOperations<String, Integer> ops = redisTemplate.boundValueOps(KeysFactory.keyForConsumerSpecificQueueLock(queueName, consumerId));
+        return jedisWrapper.executeAndReturn((jedis) -> {
+            String queueKey = KeysFactory.keyForConsumerSpecificQueueLock(queueName, consumerId);
+//            BoundValueOperations<String, Integer> ops = redisTemplate.boundValueOps(queueKey);
+//            boolean lockAcquired = ops.setIfAbsent(1);
+            Long setnx = jedis.setnx(queueKey, "1");
+            boolean lockAcquired = (setnx == 1);
 
-        boolean lockAcquired = ops.setIfAbsent(1);
-        if (lockAcquired) {
-            ops.expire(expirationTimeout, unit);
-            return true;
-        }
-        return false;
+            if (lockAcquired) {
+                jedis.pexpire(queueKey, unit.toMillis(expirationTimeout));
+                return true;
+            }
+            return false;
+        });
     }
 
     public void releaseLockForQueue(String queueName, String consumerId) {
-        redisTemplate.delete(KeysFactory.keyForConsumerSpecificQueueLock(queueName, consumerId));
+        jedisWrapper.execute((jedis) -> {
+            jedis.del(KeysFactory.keyForConsumerSpecificQueueLock(queueName, consumerId));
+        });
     }
 
-    public void setRedisTemplate(RedisTemplate redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    // 兼容性
+    public void setRedisTemplate(Object redisTemplate) {
+        // this.redisTemplate = redisTemplate;
     }
 }
