@@ -2,7 +2,6 @@ package com.github.rtmax0.redisq.queuing;
 
 import com.github.rtmax0.redisq.consumer.MessageCallback;
 import com.github.rtmax0.redisq.persistence.RedisOps;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +16,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class LockingQueueDequeueStrategyWrapper implements QueueDequeueStrategy {
 
-    @Autowired
     private RedisOps redisOps;
 
     private long lockExpirationTimeout = 5;
@@ -33,6 +31,11 @@ public class LockingQueueDequeueStrategyWrapper implements QueueDequeueStrategy 
         if (this.wrapped == null) {
             throw new IllegalStateException("LockingQueueDequeueStrategyWrapper needs an instance to wrap.");
         }
+    }
+
+    public LockingQueueDequeueStrategyWrapper(RedisOps redisOps, QueueDequeueStrategy wrapped) {
+        this(wrapped);
+        this.redisOps = redisOps;
     }
 
     public void dequeueNextMessage(String queueName, String consumerId, MessageCallback callback) {

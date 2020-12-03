@@ -1,6 +1,6 @@
 package com.github.rtmax0.redisq.consumer;
 
-import org.springframework.data.redis.RedisConnectionFailureException;
+import com.github.rtmax0.redisq.exception.RedisConnectionFailureException;
 
 public interface ConnectionFailureHandler {
 

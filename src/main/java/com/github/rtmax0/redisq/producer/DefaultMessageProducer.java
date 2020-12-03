@@ -4,7 +4,6 @@ import com.github.rtmax0.redisq.Message;
 import com.github.rtmax0.redisq.MessageQueue;
 import com.github.rtmax0.redisq.persistence.RedisOps;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
 import java.util.Calendar;
@@ -12,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageProducer<T> implements MessageProducer<T> {
 
-    @Autowired
     private RedisOps redisOps;
 
     private MessageQueue queue;

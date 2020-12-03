@@ -4,7 +4,6 @@ import com.github.rtmax0.redisq.consumer.MessageCallback;
 import com.github.rtmax0.redisq.persistence.RedisOps;
 import com.github.rtmax0.redisq.queuing.FIFOQueueDequeueStrategy;
 import com.github.rtmax0.redisq.queuing.QueueDequeueStrategy;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
 import java.util.Collection;
@@ -13,7 +12,6 @@ public class RedisMessageQueue implements MessageQueue {
 
     private static final String DEFAULT_CONSUMER_ID = "default";
 
-    @Autowired
     private RedisOps redisOps;
 
     private String queueName;

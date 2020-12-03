@@ -5,7 +5,6 @@ import com.github.rtmax0.redisq.persistence.RedisOps;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Queue/Dequeue strategy that works upon FIFO principles (First In First Out).
@@ -25,7 +24,6 @@ public class FIFOQueueDequeueStrategy implements QueueDequeueStrategy {
      */
     private long dequeueTimeoutSeconds = 1;
 
-    @Autowired
     public FIFOQueueDequeueStrategy(RedisOps redisOps) {
         this.redisOps = redisOps;
     }

@@ -5,6 +5,7 @@ import com.github.rtmax0.redisq.MessageQueue;
 import com.github.rtmax0.redisq.consumer.retry.MessageRetryStrategy;
 import com.github.rtmax0.redisq.consumer.retry.NoRetryStrategy;
 import com.github.rtmax0.redisq.consumer.retry.RetryableMessageException;
+import com.github.rtmax0.redisq.exception.RedisConnectionFailureException;
 import com.github.rtmax0.redisq.persistence.RedisOps;
 import com.github.rtmax0.redisq.producer.MessageProducer;
 import com.github.rtmax0.redisq.queuing.FIFOQueueDequeueStrategy;
@@ -13,8 +14,6 @@ import com.github.rtmax0.redisq.utils.GenericsUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.RedisConnectionFailureException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -53,7 +52,6 @@ public class MessageConsumer<T> {
     private MessageRetryStrategy<T> retryStrategy = new NoRetryStrategy<T>();
     private ConnectionFailureHandler connectionFailureHandler = new DefaultConnectionFailureHandler(log);
 
-    @Autowired
     private RedisOps redisOps;
 
     private Class<T> payloadType;

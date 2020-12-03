@@ -1,7 +1,7 @@
 package com.github.rtmax0.redisq.serialization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.data.redis.serializer.SerializationException;
+import com.github.rtmax0.redisq.exception.SerializationException;
 
 import java.io.IOException;
 

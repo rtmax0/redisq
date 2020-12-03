@@ -5,18 +5,21 @@ import com.github.rtmax0.redisq.MessageQueue;
 import com.github.rtmax0.redisq.persistence.RedisOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class MaxRetriesStrategy<T> implements MessageRetryStrategy<T>{
 
     private static final Logger log = LoggerFactory.getLogger(MaxRetriesStrategy.class);
 
-    @Autowired
     private RedisOps redisOps;
 
     private int maxRetries;
 
     public MaxRetriesStrategy(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
+    public MaxRetriesStrategy(RedisOps redisOps, int maxRetries) {
+        this.redisOps = redisOps;
         this.maxRetries = maxRetries;
     }
 

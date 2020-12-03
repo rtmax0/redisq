@@ -1,38 +1,51 @@
 package com.github.rtmax0.redisq.persistence;
 
+import com.github.rtmax0.redisq.Message;
+import com.github.rtmax0.redisq.MessageQueue;
+import com.github.rtmax0.redisq.serialization.DefaultMessageConverter;
 import com.github.rtmax0.redisq.serialization.JaxbPayloadSerializer;
 import com.github.rtmax0.redisq.serialization.MessageConverter;
 import com.github.rtmax0.redisq.serialization.PayloadSerializer;
 import com.github.rtmax0.redisq.utils.KeysFactory;
-import com.github.rtmax0.redisq.Message;
-import com.github.rtmax0.redisq.MessageQueue;
-import com.github.rtmax0.redisq.serialization.DefaultMessageConverter;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.core.BoundHashOperations;
+import org.springframework.data.redis.core.BoundListOperations;
+import org.springframework.data.redis.core.BoundSetOperations;
+import org.springframework.data.redis.core.BoundValueOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import redis.clients.jedis.Jedis;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
 public class RedisOps {
 
-    @Autowired
     private RedisTemplate redisTemplate;
 
-    @Autowired(required = false)
+    private Jedis jedis;
+
     private PayloadSerializer payloadSerializer = new JaxbPayloadSerializer();
-    @Autowired(required = false)
+
     private MessageConverter  messageConverter  = new DefaultMessageConverter();
 
     public void ensureConsumerRegistered(String queueName, String consumerId) {
-        BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(KeysFactory.keyForRegisteredConsumers(queueName));
-        ops.add(consumerId);
+
+//        BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(KeysFactory.keyForRegisteredConsumers(queueName));
+//        ops.add(consumerId);
+
+        jedis.sadd(KeysFactory.keyForRegisteredConsumers(queueName), consumerId);
     }
 
     public Collection<String> getRegisteredConsumers(String queueName) {
-        BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(KeysFactory.keyForRegisteredConsumers(queueName));
-        return ops.members();
+        //BoundSetOperations<String, String> ops = redisTemplate.boundSetOps(KeysFactory.keyForRegisteredConsumers(queueName));
+        //return ops.members();
+
+        return jedis.smembers(KeysFactory.keyForRegisteredConsumers(queueName));
     }
 
     public <T> void addMessage(String queueName, Message<T> message) {
@@ -58,6 +71,7 @@ public class RedisOps {
         String messageKey = KeysFactory.keyForMessage(queueName, message.getId());
         redisTemplate.opsForHash().putAll(messageKey, asMap);
         redisTemplate.expire(messageKey, message.getTimeToLiveSeconds(), TimeUnit.SECONDS);
+
     }
 
     public <T> Message<T> loadMessageById(String queueName, String id, Class<T> payloadType) {
@@ -124,9 +138,12 @@ public class RedisOps {
     }
 
     private String generateNextMessageID(String queueName) {
-        return Long.toString(
-                redisTemplate.opsForValue().increment(KeysFactory.keyForNextID(queueName), 1)
-        );
+
+        return Long.toString(jedis.incrBy(KeysFactory.keyForNextID(queueName), 1));
+
+//        return Long.toString(
+//                redisTemplate.opsForValue().increment(KeysFactory.keyForNextID(queueName), 1)
+//        );
     }
 
     public Long getQueueSizeForConsumer(String queueName, String consumerId) {

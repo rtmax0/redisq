@@ -1,6 +1,6 @@
 package com.github.rtmax0.redisq.serialization;
 
-import org.springframework.data.redis.serializer.SerializationException;
+import com.github.rtmax0.redisq.exception.SerializationException;
 
 /**
  * Responsible for the serialization and deserialization of RedisQ message bodies.

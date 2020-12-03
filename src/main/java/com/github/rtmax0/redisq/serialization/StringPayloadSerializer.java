@@ -1,7 +1,7 @@
 package com.github.rtmax0.redisq.serialization;
 
+import com.github.rtmax0.redisq.exception.SerializationException;
 import org.apache.commons.lang.ObjectUtils;
-import org.springframework.data.redis.serializer.SerializationException;
 
 public class StringPayloadSerializer implements PayloadSerializer {
 

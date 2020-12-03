@@ -1,7 +1,7 @@
 package com.github.rtmax0.redisq.serialization;
 
+import com.github.rtmax0.redisq.exception.SerializationException;
 import com.google.gson.Gson;
-import org.springframework.data.redis.serializer.SerializationException;
 
 /**
  * Serializes message payloads as JSON using Google's Gson library.

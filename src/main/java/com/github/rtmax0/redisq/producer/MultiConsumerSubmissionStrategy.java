@@ -3,7 +3,6 @@ package com.github.rtmax0.redisq.producer;
 import com.github.rtmax0.redisq.Message;
 import com.github.rtmax0.redisq.MessageQueue;
 import com.github.rtmax0.redisq.persistence.RedisOps;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 
@@ -12,7 +11,6 @@ import java.util.Collection;
  */
 public class MultiConsumerSubmissionStrategy extends SingleConsumerSubmissionStrategy {
 
-    @Autowired
     public MultiConsumerSubmissionStrategy(RedisOps redisOps) {
         super(redisOps);
     }

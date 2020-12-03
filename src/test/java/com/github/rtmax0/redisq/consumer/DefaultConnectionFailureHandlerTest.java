@@ -1,5 +1,6 @@
 package com.github.rtmax0.redisq.consumer;
 
+import com.github.rtmax0.redisq.exception.RedisConnectionFailureException;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,7 +9,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
-import org.springframework.data.redis.RedisConnectionFailureException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

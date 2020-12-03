@@ -4,7 +4,6 @@ import com.github.rtmax0.redisq.consumer.MessageCallback;
 import com.github.rtmax0.redisq.persistence.RedisOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Implementation of a random queue.
@@ -33,7 +32,6 @@ public class RandomQueueDequeueStrategy implements QueueDequeueStrategy {
      */
     private long dequeueBatchSize = -1;
 
-    @Autowired
     public RandomQueueDequeueStrategy(RedisOps redisOps) {
         this.redisOps = redisOps;
     }

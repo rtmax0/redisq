@@ -3,7 +3,6 @@ package com.github.rtmax0.redisq.producer;
 import com.github.rtmax0.redisq.Message;
 import com.github.rtmax0.redisq.MessageQueue;
 import com.github.rtmax0.redisq.persistence.RedisOps;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Submits messages to a single consumer (the default consumer configured on the queue).
@@ -14,7 +13,6 @@ public class SingleConsumerSubmissionStrategy implements SubmissionStrategy {
 
     protected RedisOps redisOps;
 
-    @Autowired
     public SingleConsumerSubmissionStrategy(RedisOps redisOps) {
         this.redisOps = redisOps;
     }

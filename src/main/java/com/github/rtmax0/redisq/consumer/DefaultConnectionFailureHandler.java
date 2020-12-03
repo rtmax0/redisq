@@ -1,7 +1,7 @@
 package com.github.rtmax0.redisq.consumer;
 
+import com.github.rtmax0.redisq.exception.RedisConnectionFailureException;
 import org.slf4j.Logger;
-import org.springframework.data.redis.RedisConnectionFailureException;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
